@@ -14,7 +14,7 @@ module.exports = function(grunt) {
         if(env === 'test' || env === 'prod'){
             tasks.push('git:checkout:'+(env==='prod'?'master':'dev'), 'git:pull');
         }
-        tasks.push('clean:site', 'sass:' + aliasEnv, 'render:' + (!!env?env:'local'), 'copy:site');
+        tasks.push('sass:' + aliasEnv, 'render:' + (!!env?env:'local'), 'copy:site');
         grunt.task.run(tasks);
     });
 

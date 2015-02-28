@@ -73,7 +73,7 @@ module.exports = function(grunt) {
                 grunt.config('hogan_static.sdk', {
                     options: {
                         delimiters: '<< >>',
-                        usePartials: '../global/partials/*.html',
+                        usePartials: '/www/global/html/*.html',
                         data: config
                     },
                     files: hoganFiles
