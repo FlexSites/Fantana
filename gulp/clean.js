@@ -1,7 +1,7 @@
-module.exports = function(grunt) {
-    'use strict';
-        
-    grunt.config('clean.site', ['public']);
+var del = require('del');
 
-    grunt.loadNpmTasks('grunt-contrib-clean');
+module.exports = function(gulp, pkg){
+  gulp.task('clean', function(){
+    del.sync(['public']);
+  });
 };
