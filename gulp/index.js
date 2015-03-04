@@ -6,5 +6,5 @@ module.exports = function(gulp, pkg){
     if(__filename !== file) require(file)(gulp,pkg);
   });
 
-  gulp.task('default', ['clean', 'html', 'css', 'copy']);
+  gulp.task('default', ['clean', 'html', 'css', 'js', 'copy']);
 };
