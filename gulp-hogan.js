@@ -15,11 +15,12 @@ var map = require('map-stream')
 var promises = {};
 module.exports = function(options) {
 
+  options = _.extend({}, options);
   'use strict';
   var pkg = require('./package.json');
 
   return es.map(function (file, cb) {
-    getData().then(function(data){
+    getData(options.data).then(function(data){
       file.contents = new Buffer(Hogan.compile(file.contents.toString(), {
         delimiters: '<< >>',
         disableLambda: false
@@ -41,12 +42,15 @@ module.exports = function(options) {
     return partials;
   }
 
-  function getData(){
+  function getData(data){
     var abbr = process.cwd().split('/').pop();
     if(promises[abbr]){
       return promises[abbr];
     }
     var p = new Promise(function(resolve, reject){
+      if(data){
+        return resolve(data);
+      }
       Flex.getSites(abbr, function(err, sites) {
         if(err || !sites){
           return reject(err);
