@@ -1,8 +1,10 @@
 var hogan = require('../gulp-hogan'),
   header = require('gulp-header'),
+  footer = require('gulp-footer'),
   prettify = require('gulp-prettify'),
   uglify = require('gulp-uglify'),
-  concat = require('gulp-concat');
+  concat = require('gulp-concat'),
+  gulpif = require('gulp-if');
 
 var glob = require('glob'),
   Hogan = require('hogan.js'),
@@ -15,61 +17,15 @@ var glob = require('glob'),
 var Flex = require('../gulp-resource');
 
 module.exports = function(gulp, pkg) {
-  var env = 'local';
-  if (argv.t || argv.test) {
-    env = 'test';
-  } else if (argv.p || argv.prod) {
-    env = 'prod';
-  }
+  var env = Flex.getEnv();
+  var isProd = Flex.isProd();
   gulp.task('js', function() {
-    Flex.getSites(process.cwd().split('/').pop(), function(err, sites) {
-      var site = sites[0];
-      Flex.getPages(site.id, function(err, pages) {
-        gulp.src(['source/ng/app.js', 'source/ng/**/*.js'])
-          .pipe(concat('app.js')) 
-          .pipe(hogan({ 
-            delimiters: '<< >>',
-            data: getConfig(_.extend({buildNumber: pkg.buildNumber, env: env === 'prod' ? '' : env}, site), pages)
-          }))
-          // .pipe(header('(function(window, angular, undefined) {"use strict";'))
-          // .pipe(footer('})(window, window.angular);'))
-          // .pipe(uglify())
-          .pipe(gulp.dest('public/ng/'));
-      });
-    });
+    gulp.src(['source/ng/app.js', 'source/ng/**/*.js'])
+      .pipe(concat('app.js')) 
+      .pipe(hogan())
+      .pipe(gulpif(isProd, header('(function(window, angular, undefined) {"use strict";')))
+      .pipe(gulpif(isProd, footer('})(window, window.angular);')))
+      .pipe(gulpif(isProd, uglify()))
+      .pipe(gulp.dest(Flex.dest + '/ng/'));
   });
-
-  function getConfig(config, pages) {
-
-    config.siteId = config.id;
-    config.styles = formatResource(config.styles, config);
-    config.scripts = formatResource(config.scripts, config);
-
-    // PAGES
-    if (!_.isArray(pages)) {
-      pages = [];
-    }
-    pages.forEach(function(page, i) {
-      pages[i] = _.pick(page, ['templateUrl', 'url', 'title', 'description']);
-    });
-    config.routes = JSON.stringify(pages);
-    config.routesArray = pages;
-
-    return config;
-  }
-
-  function formatResource(src, config) {
-    if (_.isString(src)) {
-      src = src.replace(/<<env>>/gi, config.env);
-      src = src.replace(/<<baseHost>>/gi, config.host)
-      if (/^\/[^/]/.test(src) && _.isNumber(config.buildNumber)) {
-        src = src.replace(/(\D)\.(js|css)/, '$1' + config.buildNumber + '.$2')
-      }
-    } else if (_.isArray(src)) {
-      _.each(src, function(resource, index) {
-        src[index] = formatResource(resource, config);
-      });
-    }
-    return src;
-  }
 }
