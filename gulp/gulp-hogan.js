@@ -1,23 +1,20 @@
 
-var map = require('map-stream')
-  , es = require('event-stream')
-  , gutil = require('gulp-util')
+var es = require('event-stream')
   , Hogan = require('hogan.js')
   , _ = require('lodash')
   , Flex = require('./gulp-resource')
   , path = require('path')
   , fs = require('fs')
   , glob = require('glob')
-  , argv = require('yargs').argv
-  , Promise = Promise || require('bluebird')
-  , Flex = require('./gulp-resource');
+  , Promise = Promise || require('bluebird');
 
 var promises = {};
 module.exports = function(options) {
 
-  options = _.extend({}, options);
   'use strict';
-  var pkg = require('./package.json');
+
+  options = _.extend({}, options);
+  var pkg = require('../package.json');
 
   return es.map(function (file, cb) {
     getData(options.data).then(function(data){
@@ -38,7 +35,7 @@ module.exports = function(options) {
       });
       return prev;
     }, {});
-    cb&&cb(partials);
+    if(cb) cb(partials);
     return partials;
   }
 
@@ -86,7 +83,7 @@ module.exports = function(options) {
   function formatResource(src, config) {
     if (_.isString(src)) {
       src = src.replace(/<<env>>/gi, config.env);
-      src = src.replace(/<<baseHost>>/gi, config.host)
+      src = src.replace(/<<baseHost>>/gi, config.host);
       if (/^\/[^/]/.test(src) && config.version && !Flex.isLocal()) {
         src = '/' + config.version + src;
       }
