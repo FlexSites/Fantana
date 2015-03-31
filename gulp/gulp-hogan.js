@@ -63,6 +63,8 @@ module.exports = function(options) {
 
   function getConfig(config, pages) {
 
+    var env = Flex.getEnv();
+    config.env = env === 'prod'?'':env;
     config.siteId = config.id;
     config.styles = formatResource(config.styles, config);
     config.scripts = formatResource(config.scripts, config);
@@ -84,9 +86,6 @@ module.exports = function(options) {
     if (_.isString(src)) {
       src = src.replace(/<<env>>/gi, config.env);
       src = src.replace(/<<baseHost>>/gi, config.host);
-      if (/^\/[^/]/.test(src) && config.version && !Flex.isLocal()) {
-        src = '/' + config.version + src;
-      }
     } else if (_.isArray(src)) {
       _.each(src, function(resource, index) {
         src[index] = formatResource(resource, config);

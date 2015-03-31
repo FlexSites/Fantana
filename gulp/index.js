@@ -7,13 +7,15 @@ var header = require('gulp-header')
   , gulpif = require('gulp-if')
   , imagemin = require('gulp-imagemin')
   , rubySass = require('gulp-ruby-sass')
-  , sourcemaps = require('gulp-sourcemaps');
+  , sourcemaps = require('gulp-sourcemaps')
+  , gzip = require('gulp-gzip')
 
 var hogan = require('./gulp-hogan')
   , Flex = require('./gulp-resource');
 
 var glob = require('glob')
-  , del = require('del');
+  , del = require('del')
+  , fs = require('fs');
 
 module.exports = function(gulp, pkg){
 
@@ -70,7 +72,7 @@ module.exports = function(gulp, pkg){
 
       // Add versioned headers
       .pipe(gulpif('*.html', header('<!-- ' + pkg.name + ' v' + pkg.version + ' -->\n\n')))
-      .pipe(gulpif(isJSorCSS,header('/* ' + pkg.name + ' v' + pkg.version + ' */\n\n')))
+      .pipe(gulpif(isJSorCSS, header('/* ' + pkg.name + ' v' + pkg.version + ' */\n\n')))
 
       // Optimize images
       .pipe(imagemin({
@@ -79,7 +81,7 @@ module.exports = function(gulp, pkg){
       }))
 
       // Add revision sha-sum
-      .pipe(rev())
+      .pipe(gulpif(isIndex, rev()))
 
       // Replace sha'd references in all text files
       .pipe(revReplace())
@@ -87,6 +89,10 @@ module.exports = function(gulp, pkg){
 
       // Output stream to 'public'
       .pipe(gulp.dest('./public'));
+  }
+
+  function isIndex(vinyl){
+    return !/index\.html/.test(vinyl.relative);
   }
 
   function isJSorCSS(vinyl){

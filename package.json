@@ -20,6 +20,7 @@
     "gulp": "^3.8.11",
     "gulp-concat": "^2.5.2",
     "gulp-footer": "^1.0.5",
+    "gulp-gzip": "^1.1.0",
     "gulp-header": "^1.2.2",
     "gulp-hogan": "^1.1.0",
     "gulp-if": "^1.2.5",
