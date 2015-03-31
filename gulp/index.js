@@ -6,30 +6,35 @@ var header = require('gulp-header')
   , revReplace = require('gulp-rev-replace')
   , gulpif = require('gulp-if')
   , imagemin = require('gulp-imagemin')
-  , rubySass = require('gulp-ruby-sass')
+  , sass = require('gulp-sass')
   , sourcemaps = require('gulp-sourcemaps')
   , gzip = require('gulp-gzip')
+  , livereload = require('gulp-livereload');
 
 var hogan = require('./gulp-hogan')
   , Flex = require('./gulp-resource');
 
-var glob = require('glob')
-  , del = require('del')
+var del = require('del')
   , fs = require('fs');
 
 module.exports = function(gulp, pkg){
 
   /** TASKS **/
-  gulp.task('default',  ['build'],  watch);
-  gulp.task('watch',    ['default']);
-  gulp.task('build',    ['clean', 'sass', 'assets']);
-  gulp.task('sass',     sass);
-  gulp.task('clean',    clean);
-  gulp.task('assets',   assets);
+  gulp.task('default',          ['assetsDev'], watch);
+  gulp.task('build',            ['clean', 'assets']);
+  gulp.task('build:livereload', ['assetsDev'], reload);
+  gulp.task('css',              css);
+  gulp.task('clean',            clean);
+  gulp.task('assets',           ['css'], assets);
+  gulp.task('assetsDev',        ['css'], assetsDev);
+  /** ALIASES **/
+  gulp.task('watch',            ['default']);
+  gulp.task('sass',             ['css']);
 
   /** FILESYSTEM WATCHER **/
   function watch(){
-    gulp.watch('source/**/*.*', ['build']);
+    livereload.listen();
+    gulp.watch(['source/**/*.*', '!**/*.css'],  ['build:livereload']);
   }
 
   /** DELETE PUBLIC **/
@@ -37,12 +42,14 @@ module.exports = function(gulp, pkg){
     del.sync([Flex.dest]);
   }
 
+  function reload(){
+    livereload.reload();
+  }
+
     /** DELETE PUBLIC **/
-  function sass(){
-    rubySass('source/scss/')
-    .on('error', function (err) {
-        console.error('Error', err.message);
-     })
+  function css(){
+    return gulp.src('source/scss/**.scss')
+      .pipe(sass())
 
     // .pipe(sourcemaps.write('maps', {
     //     includeContent: false,
@@ -54,7 +61,7 @@ module.exports = function(gulp, pkg){
 
   /** BUILD PROCESS **/
   function assets() {
-    gulp.src(['source/**/*.*', '!**/*.scss'])
+    return gulp.src(['source/**/*.*', '!**/*.scss'])
 
       // Hogan parse templates
       .pipe(gulpif(isText, hogan()))
@@ -81,17 +88,21 @@ module.exports = function(gulp, pkg){
       }))
 
       // Add revision sha-sum
-      .pipe(gulpif(isIndex, rev()))
+      .pipe(gulpif(isNotIndex, rev()))
 
       // Replace sha'd references in all text files
       .pipe(revReplace())
-
 
       // Output stream to 'public'
       .pipe(gulp.dest('./public'));
   }
 
-  function isIndex(vinyl){
+  function assetsDev(){
+    return gulp.src(['source/**/*.*', '!**/*.scss'])
+      .pipe(gulpif(isText, hogan()))
+      .pipe(gulp.dest('./public'));
+  }
+  function isNotIndex(vinyl){
     return !/index\.html/.test(vinyl.relative);
   }
 
@@ -99,9 +110,6 @@ module.exports = function(gulp, pkg){
     return /\.(js|css)$/.test(vinyl.relative);
   }
 
-  function isShad(vinyl){
-    return /\-[0-9a-f]{8}\.(html|css|js)$/.test(vinyl.relative);
-  }  
   function isText(vinyl){
     return /\.(html|css|js)$/.test(vinyl.relative);
   }
