@@ -36,6 +36,41 @@ module.exports = function(gulp, pkg){
   gulp.task('assetsDev',        ['css'],                  assetsDev);
   gulp.task('css',                                        css);
   gulp.task('clean',                                      clean);
+  gulp.task('stage',                                      deploy);
+  gulp.task('deploy',                                     deploy.bind(deploy, true));
+
+  function publish() {
+
+    // create a new publisher
+    var publisher = awspublish.create({
+      bucket: 'flex-sites',
+    });
+
+    // define custom headers
+    var headers = {
+       'Cache-Control': 'max-age=315360000, no-transform, public'
+       // ...
+     };
+
+    return gulp.src('public/**/*')
+
+      .pipe(rename(function (p) {
+        p.dirname = path.join(process.cwd().split('/').pop(), 'public', p.dirname);
+      }))
+
+       // gzip, Set Content-Encoding headers and add .gz extension
+      // .pipe(awspublish.gzip({ ext: '.gz' }))
+
+      // publisher will add Content-Length, Content-Type and headers specified above
+      // If not specified it will set x-amz-acl to public-read by default
+      .pipe(publisher.publish(headers, {force: true}))
+
+      // create a cache file to speed up consecutive uploads
+      .pipe(publisher.cache())
+
+       // print upload updates to console
+      .pipe(awspublish.reporter());
+  }
 
   /** FILESYSTEM WATCHER **/
   function watch(){
