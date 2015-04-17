@@ -14,7 +14,7 @@ module.exports = function(options) {
   'use strict';
 
   options = _.extend({}, options);
-  var pkg = require('../package.json');
+  var pkg = require(process.cwd()+'/package.json');
 
   return es.map(function (file, cb) {
     getData(options.data).then(function(data){
@@ -40,25 +40,25 @@ module.exports = function(options) {
   }
 
   function getData(data){
-    var abbr = process.cwd().split('/').pop();
-    if(promises[abbr]){
-      return promises[abbr];
+    var host = process.cwd().split('/').pop();
+    if(promises[host]){
+      return promises[host];
     }
     var p = new Promise(function(resolve, reject){
       if(data){
         return resolve(data);
       }
-      Flex.getSites(abbr, function(err, sites) {
+      Flex.getSiteByHost(host, function(err, sites) {
         if(err || !sites){
           return reject(err);
         }
         var site = sites[0];
         Flex.getPages(site.id, function(err, pages) {
-          resolve(getConfig(_.extend({version: pkg.version, env: Flex.isProd() ? '' : Flex.getEnv()}, site), pages));
+          resolve(getConfig(_.extend({version: pkg.version, env: Flex.isProd() ? '' : Flex.getEnv()}, pkg.data||{}, site), pages));
         });
       });
     });
-    return promises[abbr] = p;
+    return promises[host] = p;
   }
 
   function getConfig(config, pages) {

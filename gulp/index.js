@@ -9,32 +9,38 @@ var header = require('gulp-header')
   , sass = require('gulp-sass')
   , sourcemaps = require('gulp-sourcemaps')
   , gzip = require('gulp-gzip')
-  , livereload = require('gulp-livereload');
+  , s3 = require('gulp-s3')
+  , livereload = require('gulp-livereload')
+  , awspublish = require('gulp-awspublish')
+  , rename = require('gulp-rename');
 
 var hogan = require('./gulp-hogan')
   , Flex = require('./gulp-resource');
 
 var del = require('del')
-  , fs = require('fs');
+  , fs = require('fs')
+  , path = require('path');
 
 module.exports = function(gulp, pkg){
 
-  /** TASKS **/
-  gulp.task('default',          ['assetsDev'], watch);
-  gulp.task('build',            ['clean', 'assets']);
-  gulp.task('build:livereload', ['assetsDev'], reload);
-  gulp.task('css',              css);
-  gulp.task('clean',            clean);
-  gulp.task('assets',           ['css'], assets);
-  gulp.task('assetsDev',        ['css'], assetsDev);
   /** ALIASES **/
   gulp.task('watch',            ['default']);
   gulp.task('sass',             ['css']);
+  gulp.task('build',            ['clean', 'assets']);
+
+  /** TASKS **/
+  gulp.task('default',          ['assetsDev'],            watch);
+  gulp.task('build:livereload', ['assetsDev'],            reload);
+  gulp.task('publish',          ['build'],                publish);
+  gulp.task('assets',           ['css'],                  assets);
+  gulp.task('assetsDev',        ['css'],                  assetsDev);
+  gulp.task('css',                                        css);
+  gulp.task('clean',                                      clean);
 
   /** FILESYSTEM WATCHER **/
   function watch(){
     livereload.listen();
-    gulp.watch(['source/**/*.*', '!**/*.css'],  ['build:livereload']);
+    gulp.watch(['source/**/*', '!**/*.css'],  ['build:livereload']);
   }
 
   /** DELETE PUBLIC **/
@@ -61,7 +67,7 @@ module.exports = function(gulp, pkg){
 
   /** BUILD PROCESS **/
   function assets() {
-    return gulp.src(['source/**/*.*', '!**/*.scss'])
+    return gulp.src(['source/**/*', '!**/*.scss'])
 
       // Hogan parse templates
       .pipe(gulpif(isText, hogan()))
@@ -88,7 +94,7 @@ module.exports = function(gulp, pkg){
       }))
 
       // Add revision sha-sum
-      .pipe(gulpif(isNotIndex, rev()))
+      .pipe(gulpif(isJSorCSS, rev()))
 
       // Replace sha'd references in all text files
       .pipe(revReplace())

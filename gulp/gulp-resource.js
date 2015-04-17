@@ -6,21 +6,17 @@ var pkg = require(process.cwd()+'/package.json');
 
 var config = {
   getSites: function(siteId, next) {
-    var path = '';
-    if(siteId.length === 5){
-      path = '?filter[where][abbr]='+siteId;
-    }
-    else if(typeof siteId === 'string'){
-      path = '/'+siteId;
-    }
-    this.grequest('/sites'+path, next);
+    this.grequest('/sites'+(siteId?'/'+siteId:''), next);
+  },
+  getSiteByHost: function(host, next) {
+    this.grequest('/sites?filter[where][host]='+host, next);
   },
   getPages: function(siteId, next) {
     this.grequest('/sites/' + siteId + '/pages', next);
   },
   grequest: function(path, next) {
     request({
-      hostname: '127.0.0.1',
+      hostname: 'localapi.flexhub.io',
       port: 80,
       path: path,
       rejectUnauthorized: false
