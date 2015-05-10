@@ -14,9 +14,16 @@ var config = {
   getPages: function(siteId, next) {
     this.grequest('/sites/' + siteId + '/pages', next);
   },
+  getPrefix: function(){
+    var env = this.getEnv();
+    if(env === 'prod') return '';
+    return env;
+  },
   grequest: function(path, next) {
+    var prefix = this.getPrefix();
+
     request({
-      hostname: 'localapi.flexhub.io',
+      hostname: prefix+'api.flexsites.io',
       port: 80,
       path: path,
       rejectUnauthorized: false

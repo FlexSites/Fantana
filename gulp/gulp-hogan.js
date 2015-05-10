@@ -58,13 +58,13 @@ module.exports = function(options) {
         });
       });
     });
-    return promises[host] = p;
+    return (promises[host] = p);
   }
 
   function getConfig(config, pages) {
 
     var env = Flex.getEnv();
-    config.env = env === 'prod'?'':env;
+    config.env = env === 'prod'?'www':env;
     config.siteId = config.id;
     config.styles = formatResource(config.styles, config);
     config.scripts = formatResource(config.scripts, config);
@@ -84,11 +84,14 @@ module.exports = function(options) {
 
   function formatResource(src, config) {
     if (_.isString(src)) {
-      src = src.replace(/<<env>>/gi, config.env);
-      src = src.replace(/<<baseHost>>/gi, config.host);
-    } else if (_.isArray(src)) {
-      _.each(src, function(resource, index) {
-        src[index] = formatResource(resource, config);
+      config.baseHost = config.host;
+      src = Hogan.compile(src, {
+        delimiters: '<< >>',
+        disableLambda: false
+      }).render(config);
+    } else if (Array.isArray(src)) {
+      src = src.map(function(resource){
+        return formatResource(resource, config);
       });
     }
     return src;
