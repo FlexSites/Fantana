@@ -49,12 +49,17 @@ module.exports = function(options) {
         return resolve(data);
       }
       Flex.getSiteByHost(host, function(err, sites) {
-        if(err || !sites){
-          return reject(err);
-        }
+        if(!sites || !sites.length) err = new Error('Site "'+host+'" not found');
+        if(err) return reject(err);
+
         var site = sites[0];
         Flex.getPages(site.id, function(err, pages) {
-          resolve(getConfig(_.extend({version: pkg.version, env: Flex.isProd() ? '' : Flex.getEnv()}, pkg.data||{}, site), pages));
+          var config = _.extend({
+            version: pkg.version,
+            env: Flex.getEnv(),
+            prefix: Flex.isProd() ? '' : Flex.getEnv()
+          }, pkg.data||{}, site);
+          resolve(getConfig(config, pages));
         });
       });
     });
