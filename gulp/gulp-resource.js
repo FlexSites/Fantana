@@ -9,10 +9,10 @@ var config = {
     this.grequest('/sites'+(siteId?'/'+siteId:''), next);
   },
   getSiteByHost: function(host, next) {
-    this.grequest('/sites?filter[where][host]='+host, next);
+    this.grequest('/sites?filter[where][host]='+host.replace(/\./g, '%2E'), next);
   },
   getPages: function(siteId, next) {
-    this.grequest('/sites/' + siteId + '/pages', next);
+    this.grequest('/pages?filter[where][site]=' + siteId, next);
   },
   getPrefix: function(){
     var env = this.getEnv();
@@ -23,9 +23,9 @@ var config = {
     var prefix = this.getPrefix();
 
     request({
-      hostname: prefix+'api.flexsites.io',
+      hostname: prefix + 'api.flexsites.io',
       port: 80,
-      path: path,
+      path: '/api/v1' + path,
       rejectUnauthorized: false
     }, function(res, error) {
       res.setEncoding('utf8');
